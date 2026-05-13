@@ -1,0 +1,76 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: leadmend-db
+    environment:
+      POSTGRES_USER: leadmend
+      POSTGRES_PASSWORD: leadmend
+      POSTGRES_DB: leadmend
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d leadmend"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build: 
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: leadmend-backend
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "8000:8000"
+    env_file:
+      - ./backend/.env
+    environment:
+      DATABASE_URL: postgresql+asyncpg://leadmend:leadmend@db:5432/leadmend
+      ENRICH_API_URL: http://mock-enrich:8080/enrich
+      SLACK_HIGH_VALUE_WEBHOOK: ""
+      SLACK_MID_VALUE_WEBHOOK: ""
+      SLACK_LOW_VALUE_WEBHOOK: ""
+      DUPLICATE_SLACK_WEBHOOK: ""
+      CRM_WEBHOOK_URL: "http://n8n:5678/webhook/lead"
+
+  n8n:
+    image: n8nio/n8n:latest
+    container_name: leadmend-n8n
+    ports:
+      - "5678:5678"
+    volumes:
+      - n8n_data:/home/node/.n8n
+      - ./n8n/workflows:/home/node/workflows
+    environment:
+      - N8N_BASIC_AUTH_ACTIVE=true
+      - N8N_BASIC_AUTH_USER=admin
+      - N8N_BASIC_AUTH_PASSWORD=admin
+
+  mock-enrich:
+    build:
+      context: ./mock_enrich
+      dockerfile: Dockerfile
+    container_name: leadmend-mock-enrich
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: leadmend-frontend
+    ports:
+      - "4321:4321"
+    environment:
+      - VITE_API_BASE_URL=http://localhost:8000
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:
+  n8n_data:

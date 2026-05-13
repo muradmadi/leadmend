@@ -1,0 +1,18 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-lm-bg text-lm-text;
+  }
+}
+
+* {
+  border-radius: 0px !important;
+}
+
+::selection {
+  background: #e76f51;
+  color: #1c1c1e;
+}

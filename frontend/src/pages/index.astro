@@ -1,0 +1,50 @@
+---
+/**
+ * @packageDocumentation
+ * The primary entry point for the LeadMend demo application.
+ * 
+ * @remarks
+ * This page serves as the host for the {@link LeadDemo} React island. 
+ * It handles the initial SSR (Server-Side Rendering) of the shell and 
+ * injects critical global styles and typography tokens.
+ * 
+ * The page is designed with a minimal, focus-oriented layout to highlight
+ * the pipeline visualization logic.
+ */
+import LeadDemo from '../components/LeadDemo';
+import '../styles/global.css';
+---
+
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<meta name="viewport" content="width=device-width" />
+		<meta name="generator" content={Astro.generator} />
+		<link rel="preconnect" href="https://fonts.googleapis.com">
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+		<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&family=JetBrains+Mono&family=Playfair+Display:wght@500;700&display=swap" rel="stylesheet">
+		<title>LeadMend | Self-Healing Pipeline Demo</title>
+		<meta name="description" content="A self-healing lead enrichment & routing demo." />
+	</head>
+	<body class="bg-lm-bg min-h-screen font-body antialiased text-lm-text">
+		<main class="max-w-[720px] mx-auto px-6 py-20">
+			<header class="mb-12">
+				<h1 class="font-heading font-bold text-5xl text-lm-text mb-2">LeadMend</h1>
+				<p class="font-body font-normal text-lm-text opacity-60 text-lg">
+					A self-healing lead enrichment & routing demo
+				</p>
+			</header>
+
+			<LeadDemo client:load />
+
+			<footer class="mt-24 text-center text-lm-text opacity-30 text-xs font-mono">
+				<p>&copy; 2026 Murad Madi. Self-healing leads demo.</p>
+			</footer>
+		</main>
+	</body>
+</html>
+
+<style is:global>
+	/* Styles are now in src/styles/global.css */
+</style>

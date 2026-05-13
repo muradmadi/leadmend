@@ -1,0 +1,54 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  backend-lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install Ruff
+        run: pip install ruff
+      - name: Run Ruff
+        run: |
+          cd backend
+          ruff check .
+          ruff format --check .
+
+  backend-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install dependencies
+        run: |
+          cd backend
+          pip install poetry
+          poetry config virtualenvs.create false
+          poetry install
+      - name: Run pytest
+        run: |
+          cd backend
+          poetry run pytest
+
+  docker-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build Backend Image
+        run: docker build ./backend -t leadmend-backend:latest
+      - name: Build Frontend Image
+        run: docker build ./frontend -t leadmend-frontend:latest
+      - name: Build Mock Enrich Image
+        run: docker build ./mock_enrich -t leadmend-mock-enrich:latest

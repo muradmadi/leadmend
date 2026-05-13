@@ -1,0 +1,159 @@
+{
+  "name": "LeadRouting",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "webhook/lead",
+        "options": {}
+      },
+      "id": "18c21841-8666-4171-8935-716447817088",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        400,
+        300
+      ],
+      "webhookId": "lead-webhook"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Mock: Store lead in Google Sheet (Simulated by logging to console)\nconsole.log('--- MOCK GOOGLE SHEET STORAGE ---');\nconsole.log('Data:', JSON.stringify($json, null, 2));\nreturn $json;"
+      },
+      "id": "b3f3b9c7-e374-4b52-9b24-94917996c093",
+      "name": "Mock Google Sheet",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        620,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://hooks.slack.com/services/MOCK/WEBHOOK/N8N",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "text",
+              "value": "=\"n8n Visibility: New lead from \" + $json.email + \" (Score: \" + $json.score + \")\""
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "c4782921-2e61-468b-90f7-118809176319",
+      "name": "Slack Notification",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        840,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "number": [
+            {
+              "value1": "={{ $json.score }}",
+              "operation": "largerEqual",
+              "value2": 50
+            }
+          ]
+        }
+      },
+      "id": "f5f5c55d-5555-4555-b555-555555555555",
+      "name": "Is High Value?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        1060,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://httpbin.org/post",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"task\": \"Follow up with high value lead\",\n  \"lead\": {{ $json.email }},\n  \"company\": {{ $json.company }}\n}",
+        "options": {}
+      },
+      "id": "d1d1d1d1-1111-4111-b111-111111111111",
+      "name": "Mock CRM Task",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        1280,
+        200
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Mock Google Sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mock Google Sheet": {
+      "main": [
+        [
+          {
+            "node": "Slack Notification",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Slack Notification": {
+      "main": [
+        [
+          {
+            "node": "Is High Value?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is High Value?": {
+      "main": [
+        [
+          {
+            "node": "Mock CRM Task",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "meta": {
+    "templateId": "lead-routing-template"
+  }
+}
