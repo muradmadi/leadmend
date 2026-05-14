@@ -2,11 +2,6 @@
   <!-- Insert Logo Here if available -->
   <h1>LeadMend 🚀</h1>
 
-  <p>
-    <a href="https://github.com/muradmadi/leadmend/actions"><img src="https://img.shields.io/github/actions/workflow/status/muradmadi/leadmend/ci.yml?style=flat-square&logo=github-actions&logoColor=white" alt="Build Status"></a>
-    <a href="https://muradmadi.github.io/leadmend/"><img src="https://img.shields.io/badge/docs-Sphinx-blue?style=flat-square&logo=sphinx&logoColor=white" alt="Docs"></a>
-  </p>
-
   <p><em>The resilient gateway for high-integrity lead enrichment and intelligent routing.</em></p>
 </div>
 
