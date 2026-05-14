@@ -71,9 +71,7 @@ async def test_route_lead_no_webhook_logs(caplog):
     # Mock settings to have empty webhooks
     with patch("app.services.router.settings") as mock_settings, patch(
         "app.services.router.send_to_crm", new_callable=AsyncMock
-    ), patch(
-        "app.services.slack_notifier.httpx.AsyncClient.post"
-    ):
+    ), patch("app.services.slack_notifier.httpx.AsyncClient.post"):
         mock_settings.SLACK_LOW_VALUE_WEBHOOK = ""
 
         plan = await route_lead(score, lead_data)
