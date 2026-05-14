@@ -144,3 +144,6 @@ htmlcov/
 # OS
 .DS_Store
 Thumbs.db
+
+# Handoff
+handoff.md
