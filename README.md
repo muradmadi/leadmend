@@ -3,15 +3,39 @@
   <h1>LeadMend 🚀</h1>
 
   <p>
-    <a href="https://github.com/murad/leadmend/actions"><img src="https://img.shields.io/github/actions/workflow/status/murad/leadmend/ci.yml?style=flat-square&logo=github-actions&logoColor=white" alt="Build Status"></a>
-    <a href="https://docs.project.com"><img src="https://img.shields.io/badge/docs-Sphinx-blue?style=flat-square&logo=sphinx&logoColor=white" alt="Docs"></a>
-    <a href="https://astro.build"><img src="https://img.shields.io/badge/Framework-Astro-ff5a03?style=flat-square&logo=astro&logoColor=white" alt="Astro"></a>
-    <a href="https://tailwindcss.com/"><img src="https://img.shields.io/badge/CSS-Tailwind%20v4-38B2AC?style=flat-square&logo=tailwind-css&logoColor=white" alt="Tailwind"></a>
-    <a href="https://fastapi.tiangolo.com/"><img src="https://img.shields.io/badge/API-FastAPI-009688?style=flat-square&logo=fastapi&logoColor=white" alt="FastAPI"></a>
+    <a href="https://github.com/muradmadi/leadmend/actions"><img src="https://img.shields.io/github/actions/workflow/status/muradmadi/leadmend/ci.yml?style=flat-square&logo=github-actions&logoColor=white" alt="Build Status"></a>
+    <a href="https://muradmadi.github.io/leadmend/"><img src="https://img.shields.io/badge/docs-Sphinx-blue?style=flat-square&logo=sphinx&logoColor=white" alt="Docs"></a>
   </p>
 
   <p><em>The resilient gateway for high-integrity lead enrichment and intelligent routing.</em></p>
 </div>
+
+---
+
+## 🛠️ Built With
+
+**Frontend**
+<p>
+  <img src="https://img.shields.io/badge/Astro-ff5a03?style=flat-square&logo=astro&logoColor=white" alt="Astro">
+  <img src="https://img.shields.io/badge/React-20232A?style=flat-square&logo=react&logoColor=61DAFB" alt="React">
+  <img src="https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=flat-square&logo=tailwind-css&logoColor=white" alt="Tailwind CSS">
+</p>
+
+**Backend & Data**
+<p>
+  <img src="https://img.shields.io/badge/Python_3.11-3776AB?style=flat-square&logo=python&logoColor=white" alt="Python">
+  <img src="https://img.shields.io/badge/FastAPI-009688?style=flat-square&logo=fastapi&logoColor=white" alt="FastAPI">
+  <img src="https://img.shields.io/badge/PostgreSQL-316192?style=flat-square&logo=postgresql&logoColor=white" alt="PostgreSQL">
+  <img src="https://img.shields.io/badge/Pydantic-E92063?style=flat-square&logo=pydantic&logoColor=white" alt="Pydantic">
+  <img src="https://img.shields.io/badge/SQLAlchemy-D71F00?style=flat-square&logo=sqlalchemy&logoColor=white" alt="SQLAlchemy">
+</p>
+
+**Infrastructure & Automation**
+<p>
+  <img src="https://img.shields.io/badge/Docker-2496ED?style=flat-square&logo=docker&logoColor=white" alt="Docker">
+  <img src="https://img.shields.io/badge/n8n-FF6D5A?style=flat-square&logo=n8n&logoColor=white" alt="n8n">
+  <img src="https://img.shields.io/badge/GitHub_Actions-2088FF?style=flat-square&logo=github-actions&logoColor=white" alt="GitHub Actions">
+</p>
 
 ---
 
