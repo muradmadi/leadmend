@@ -3,6 +3,8 @@
   <h1>LeadMend 🚀</h1>
 
   <p><em>The resilient gateway for high-integrity lead enrichment and intelligent routing.</em></p>
+
+  [![CI](https://github.com/muradmadi/leadmend/actions/workflows/ci.yml/badge.svg)](https://github.com/muradmadi/leadmend/actions/workflows/ci.yml)
 </div>
 
 ---
