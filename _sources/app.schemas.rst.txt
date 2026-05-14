@@ -1,0 +1,21 @@
+app.schemas package
+===================
+
+Submodules
+----------
+
+app.schemas.lead module
+-----------------------
+
+.. automodule:: app.schemas.lead
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: app.schemas
+   :members:
+   :undoc-members:
+   :show-inheritance:

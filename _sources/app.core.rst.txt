@@ -1,0 +1,29 @@
+app.core package
+================
+
+Submodules
+----------
+
+app.core.config module
+----------------------
+
+.. automodule:: app.core.config
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+app.core.db module
+------------------
+
+.. automodule:: app.core.db
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: app.core
+   :members:
+   :undoc-members:
+   :show-inheritance:

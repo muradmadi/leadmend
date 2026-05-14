@@ -1,0 +1,61 @@
+app.services package
+====================
+
+Submodules
+----------
+
+app.services.deduplicator module
+--------------------------------
+
+.. automodule:: app.services.deduplicator
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+app.services.enricher module
+----------------------------
+
+.. automodule:: app.services.enricher
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+app.services.router module
+--------------------------
+
+.. automodule:: app.services.router
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+app.services.scorer module
+--------------------------
+
+.. automodule:: app.services.scorer
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+app.services.slack\_notifier module
+-----------------------------------
+
+.. automodule:: app.services.slack_notifier
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+app.services.validator module
+-----------------------------
+
+.. automodule:: app.services.validator
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: app.services
+   :members:
+   :undoc-members:
+   :show-inheritance:
