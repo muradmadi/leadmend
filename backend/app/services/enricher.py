@@ -10,16 +10,26 @@ Exports:
 """
 
 import logging
+
 import httpx
-from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
-from app.schemas.lead import LeadWebhookPayload
+from tenacity import (
+    retry,
+    retry_if_exception_type,
+    stop_after_attempt,
+    wait_exponential,
+)
+
 from app.core.config import settings
+from app.schemas.lead import LeadWebhookPayload
 
 logger = logging.getLogger(__name__)
 
-async def enrich_lead(payload: LeadWebhookPayload, simulate_failure: bool = False) -> dict:
+
+async def enrich_lead(
+    payload: LeadWebhookPayload, simulate_failure: bool = False
+) -> dict:
     """Enrich lead data by calling an external enrichment API.
-    
+
     If simulate_failure is True, it skips the API call and returns fallback values.
 
     Retries on failure with exponential backoff. Returns a dictionary with
@@ -32,7 +42,7 @@ async def enrich_lead(payload: LeadWebhookPayload, simulate_failure: bool = Fals
 
     Returns:
         dict: The enriched firmographic data.
-        
+
     Example:
         >>> from app.schemas.lead import LeadWebhookPayload
         >>> from app.services.enricher import enrich_lead
@@ -45,10 +55,7 @@ async def enrich_lead(payload: LeadWebhookPayload, simulate_failure: bool = Fals
     if payload.website:
         domain = payload.website.host
 
-    request_data = {
-        "email": payload.email,
-        "domain": domain
-    }
+    request_data = {"email": payload.email, "domain": domain}
 
     try:
         if simulate_failure:
@@ -57,19 +64,22 @@ async def enrich_lead(payload: LeadWebhookPayload, simulate_failure: bool = Fals
         async with httpx.AsyncClient() as client:
             return await _enrich_call_with_retry(client, request_data)
     except Exception as e:
-        logger.warning(f"Enrichment failed after {settings.ENRICHMENT_MAX_RETRIES} attempts: {e}")
+        logger.warning(
+            f"Enrichment failed after {settings.ENRICHMENT_MAX_RETRIES} attempts: {e}"
+        )
         return {
             "company_name": payload.company or "Unknown",
             "industry": "Unknown",
             "company_size": "Unknown",
-            "company_domain": domain or "Unknown"
+            "company_domain": domain or "Unknown",
         }
+
 
 @retry(
     stop=stop_after_attempt(settings.ENRICHMENT_MAX_RETRIES),
     wait=wait_exponential(multiplier=1, min=1, max=4),
     retry=retry_if_exception_type((httpx.HTTPError, httpx.TimeoutException)),
-    reraise=True
+    reraise=True,
 )
 async def _enrich_call_with_retry(client: httpx.AsyncClient, data: dict) -> dict:
     """Execute the HTTP POST request to the enrichment API with retries.
@@ -84,7 +94,7 @@ async def _enrich_call_with_retry(client: httpx.AsyncClient, data: dict) -> dict
 
     Returns:
         dict: The JSON response parsed into a dictionary.
-        
+
     Example:
         >>> import httpx
         >>> from app.services.enricher import _enrich_call_with_retry
@@ -93,17 +103,13 @@ async def _enrich_call_with_retry(client: httpx.AsyncClient, data: dict) -> dict
         {'company_name': 'Test'}
 
     """
-    response = await client.post(
-        settings.ENRICH_API_URL, 
-        json=data, 
-        timeout=5.0
-    )
+    response = await client.post(settings.ENRICH_API_URL, json=data, timeout=5.0)
     response.raise_for_status()
-    
+
     res_json = response.json()
     return {
         "company_name": res_json.get("company_name", "Unknown"),
         "industry": res_json.get("industry", "Unknown"),
         "company_size": res_json.get("company_size", "Unknown"),
-        "company_domain": res_json.get("domain", data.get("domain"))
+        "company_domain": res_json.get("domain", data.get("domain")),
     }

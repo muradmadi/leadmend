@@ -9,10 +9,12 @@ Exports:
 """
 
 import logging
+
 from app.core.config import settings
 from app.services.slack_notifier import send_slack_notification, send_to_crm
 
 logger = logging.getLogger(__name__)
+
 
 async def route_lead(score: int, lead_data: dict) -> dict:
     """Route a lead based on its calculated score.
@@ -27,7 +29,7 @@ async def route_lead(score: int, lead_data: dict) -> dict:
 
     Returns:
         dict: A routing plan summary detailing the assigned tier and sync status.
-        
+
     Example:
         >>> await route_lead(65, {"email": "ceo@bigcorp.com"})
         {'tier': 'high', 'score': 65, 'slack_notified': True, 'crm_synced': True}
@@ -57,25 +59,27 @@ async def route_lead(score: int, lead_data: dict) -> dict:
 
     # If webhook URL is missing, log a warning but don't fail
     if tier == "invalid" and not webhook_url:
-        logger.warning(f"Invalid lead detected but SLACK_INVALID_WEBHOOK is not set. Lead: {email}")
-    
+        logger.warning(
+            f"Invalid lead detected but SLACK_INVALID_WEBHOOK is not set. Lead: {email}"
+        )
+
     # Build Slack Blocks for a premium feel
-    
+
     blocks = [
         {
             "type": "header",
             "text": {
                 "type": "plain_text",
                 "text": f"🔥 New Lead: {tier.capitalize()} Priority",
-                "emoji": True
-            }
+                "emoji": True,
+            },
         },
         {
             "type": "section",
             "text": {
                 "type": "mrkdwn",
-                "text": f"A new lead has been processed and scored *{score}* points."
-            }
+                "text": f"A new lead has been processed and scored *{score}* points.",
+            },
         },
         {
             "type": "section",
@@ -83,39 +87,37 @@ async def route_lead(score: int, lead_data: dict) -> dict:
                 {"type": "mrkdwn", "text": f"*Email:*\n{email}"},
                 {"type": "mrkdwn", "text": f"*Company:*\n{company}"},
                 {"type": "mrkdwn", "text": f"*Industry:*\n{industry}"},
-                {"type": "mrkdwn", "text": f"*Size:*\n{size}"}
-            ]
+                {"type": "mrkdwn", "text": f"*Size:*\n{size}"},
+            ],
         },
-        {
-            "type": "divider"
-        },
+        {"type": "divider"},
         {
             "type": "context",
             "elements": [
                 {
                     "type": "mrkdwn",
-                    "text": f"Status: Processed by Leadmend Routing Service | Tier: {tier.upper()}"
+                    "text": f"Status: Processed by Leadmend Routing Service | Tier: {tier.upper()}",
                 }
-            ]
-        }
+            ],
+        },
     ]
-    
+
     # Send Slack Notification (async)
     await send_slack_notification(
-        webhook_url=webhook_url, 
-        blocks=blocks, 
-        fallback_text=f"New {tier} lead: {email} ({score})"
+        webhook_url=webhook_url,
+        blocks=blocks,
+        fallback_text=f"New {tier} lead: {email} ({score})",
     )
-    
+
     # Send to CRM (async, handled internally to not break flow)
     await send_to_crm(lead_data)
-    
+
     routing_plan = {
         "tier": tier,
         "score": score,
         "slack_notified": bool(webhook_url),
-        "crm_synced": True
+        "crm_synced": True,
     }
-    
+
     logger.info(f"Lead {email} routed. Tier: {tier}, Score: {score}")
     return routing_plan

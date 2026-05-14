@@ -9,11 +9,15 @@ Exports:
 """
 
 import logging
+
 from app.schemas.lead import LeadWebhookPayload
 
 logger = logging.getLogger(__name__)
 
-def calculate_score(payload: LeadWebhookPayload, enriched_data: dict, is_duplicate: bool) -> int:
+
+def calculate_score(
+    payload: LeadWebhookPayload, enriched_data: dict, is_duplicate: bool
+) -> int:
     """Calculate a priority score for the lead.
 
     Applies scoring rules based on firmographics and email domain quality.
@@ -26,7 +30,7 @@ def calculate_score(payload: LeadWebhookPayload, enriched_data: dict, is_duplica
 
     Returns:
         int: The computed lead score.
-        
+
     Example:
         >>> from app.schemas.lead import LeadWebhookPayload
         >>> from app.services.scorer import calculate_score
@@ -40,14 +44,14 @@ def calculate_score(payload: LeadWebhookPayload, enriched_data: dict, is_duplica
         return 0
 
     score = 10
-    
+
     # Enrichment: Company Size
     company_size = enriched_data.get("company_size")
     if company_size in ["51-200"]:
         score += 15
     elif company_size == "201-1000":
         score += 25
-        
+
     # Enrichment: Industry
     industry = enriched_data.get("industry", "")
     tech_industries = ["saas", "tech", "artificial intelligence", "ai/ml", "software"]
@@ -55,17 +59,23 @@ def calculate_score(payload: LeadWebhookPayload, enriched_data: dict, is_duplica
         score += 20
     elif industry == "Finance":
         score += 10
-        
+
     # Email Domain
     email = payload.email or ""
-    free_providers = ["gmail.com", "yahoo.com", "outlook.com", "hotmail.com", "icloud.com"]
+    free_providers = [
+        "gmail.com",
+        "yahoo.com",
+        "outlook.com",
+        "hotmail.com",
+        "icloud.com",
+    ]
     domain = email.split("@")[-1] if "@" in email else ""
     if domain and domain not in free_providers and domain != "unknown.com":
         score += 10
-        
+
     # Company field presence
     if payload.company and payload.company.lower() not in ["unknown", "???", ""]:
         score += 5
-        
+
     logger.info(f"Calculated score {score} for lead {email}")
     return score

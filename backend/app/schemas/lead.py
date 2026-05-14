@@ -10,16 +10,26 @@ Exports:
     LeadWebhookPayload: The Pydantic validation schema for incoming requests.
 """
 
-import re
 import logging
+import re
 from datetime import datetime
-from typing import Optional, Any
-from sqlalchemy import String, Integer, DateTime, text, Index
+from typing import Any, Optional
+
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    EmailStr,
+    HttpUrl,
+    field_validator,
+    model_validator,
+)
+from sqlalchemy import DateTime, Index, Integer, String, text
 from sqlalchemy.orm import Mapped, mapped_column
-from pydantic import BaseModel, ConfigDict, EmailStr, HttpUrl, field_validator, model_validator
+
 from app.core.db import Base
 
 logger = logging.getLogger(__name__)
+
 
 class Lead(Base):
     """Represents a validated and enriched lead in the database.
@@ -49,10 +59,19 @@ class Lead(Base):
     company_domain: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     industry: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     company_size: Mapped[Optional[str]] = mapped_column(String, nullable=True)
-    lead_score: Mapped[int] = mapped_column(Integer, default=0, server_default=text("0"))
+    lead_score: Mapped[int] = mapped_column(
+        Integer, default=0, server_default=text("0")
+    )
     source: Mapped[Optional[str]] = mapped_column(String, nullable=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, server_default=text("CURRENT_TIMESTAMP"))
-    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, server_default=text("CURRENT_TIMESTAMP"), onupdate=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime, default=datetime.utcnow, server_default=text("CURRENT_TIMESTAMP")
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime,
+        default=datetime.utcnow,
+        server_default=text("CURRENT_TIMESTAMP"),
+        onupdate=datetime.utcnow,
+    )
 
     __table_args__ = (
         Index(
@@ -62,6 +81,7 @@ class Lead(Base):
             postgresql_ops={"company_name": "gin_trgm_ops"},
         ),
     )
+
 
 class LeadWebhookPayload(BaseModel):
     """Validates incoming lead payloads with self-healing mechanisms.
@@ -84,10 +104,10 @@ class LeadWebhookPayload(BaseModel):
     company: Optional[str] = None
     website: Optional[HttpUrl] = None
     message: Optional[str] = None
-    
-    model_config = ConfigDict(extra='allow')
 
-    @field_validator('email', mode='before')
+    model_config = ConfigDict(extra="allow")
+
+    @field_validator("email", mode="before")
     @classmethod
     def normalize_email(cls, v: Any, info: Any) -> Any:
         """Strip whitespace and lowercase the email address.
@@ -98,7 +118,7 @@ class LeadWebhookPayload(BaseModel):
 
         Returns:
             Any: The normalized email string, or the original value if missing.
-            
+
         Example:
             >>> from app.schemas.lead import LeadWebhookPayload
             >>> LeadWebhookPayload.normalize_email("  Test@Example.com  ", None)
@@ -109,15 +129,15 @@ class LeadWebhookPayload(BaseModel):
             v = v.strip().lower()
             if v:
                 return v
-        
+
         # If email is missing or empty, try to extract from message
-        # We need to access 'message' from the raw data if possible, 
+        # We need to access 'message' from the raw data if possible,
         # but in 'before' validator for a field, we only have the field value.
         # Wait, Pydantic v2 'before' validator for a field only receives the value.
         # To access other fields, I might need a model_validator(mode='before').
         return v
 
-    @model_validator(mode='before')
+    @model_validator(mode="before")
     @classmethod
     def extract_email_from_message(cls, data: Any) -> Any:
         """Attempt to recover an email from the message body if missing.
@@ -127,7 +147,7 @@ class LeadWebhookPayload(BaseModel):
 
         Returns:
             Any: The modified payload with an extracted email, if found.
-            
+
         Example:
             >>> from app.schemas.lead import LeadWebhookPayload
             >>> data = {"message": "Reach me at missing@example.com"}
@@ -136,28 +156,30 @@ class LeadWebhookPayload(BaseModel):
 
         """
         if isinstance(data, dict):
-            email = data.get('email')
-            message = data.get('message')
-            
+            email = data.get("email")
+            message = data.get("message")
+
             if not email and message:
                 email_regex = r"[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+"
                 match = re.search(email_regex, message)
                 if match:
                     extracted_email = match.group(0).lower()
-                    logger.warning(f"Email missing, extracted {extracted_email} from message")
-                    data['email'] = extracted_email
-            
+                    logger.warning(
+                        f"Email missing, extracted {extracted_email} from message"
+                    )
+                    data["email"] = extracted_email
+
             if email and isinstance(email, str):
-                data['email'] = email.strip().lower()
+                data["email"] = email.strip().lower()
         return data
 
-    @model_validator(mode='after')
-    def infer_company(self) -> 'LeadWebhookPayload':
+    @model_validator(mode="after")
+    def infer_company(self) -> "LeadWebhookPayload":
         """Infer the company name from the website domain if missing.
 
         Returns:
             LeadWebhookPayload: The instance with an inferred company name.
-            
+
         Example:
             >>> from app.schemas.lead import LeadWebhookPayload
             >>> payload = LeadWebhookPayload(website="https://acme.com")
@@ -170,17 +192,18 @@ class LeadWebhookPayload(BaseModel):
                 # crudely extract company name from domain
                 host = self.website.host
                 if host:
-                    parts = host.split('.')
+                    parts = host.split(".")
                     if len(parts) >= 2:
                         # e.g. "www.example.com" -> "example"
                         # "example.co.uk" -> "example" (maybe too complex for crude)
                         # Just take the first part that isn't www
-                        if parts[0] == 'www' and len(parts) > 2:
+                        if parts[0] == "www" and len(parts) > 2:
                             self.company = parts[1].capitalize()
                         else:
                             self.company = parts[0].capitalize()
-                        logger.info(f"Inferred company '{self.company}' from website {self.website}")
+                        logger.info(
+                            f"Inferred company '{self.company}' from website {self.website}"
+                        )
             except Exception:
                 pass
         return self
-

@@ -28,6 +28,7 @@ jobs:
     - name: Build HTML
       run: |
         cd docs
+        sphinx-apidoc -o . ../backend/app
         # Using sphinx-build directly because there is no Makefile in the docs directory
         sphinx-build -b html . _build/html
 

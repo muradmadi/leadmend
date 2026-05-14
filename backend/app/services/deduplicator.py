@@ -8,12 +8,16 @@ Exports:
     check_duplicate: Evaluates a lead against existing database records.
 """
 
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func
-from app.schemas.lead import Lead
-from app.core.config import settings
 
-async def check_duplicate(db: AsyncSession, email: str, company_name: str, domain: str) -> dict:
+from app.core.config import settings
+from app.schemas.lead import Lead
+
+
+async def check_duplicate(
+    db: AsyncSession, email: str, company_name: str, domain: str
+) -> dict:
     """Check if a lead already exists in the database.
 
     Performs an exact match on the email address, followed by fuzzy pg_trgm
@@ -30,7 +34,7 @@ async def check_duplicate(db: AsyncSession, email: str, company_name: str, domai
     Returns:
         dict: A dictionary indicating if it is a duplicate, the existing ID,
         and the match type.
-        
+
     Example:
         >>> from app.services.deduplicator import check_duplicate
         >>> # Assuming 'session' is an active AsyncSession
@@ -42,45 +46,57 @@ async def check_duplicate(db: AsyncSession, email: str, company_name: str, domai
     query_email = select(Lead).where(Lead.email == email)
     result_email = await db.execute(query_email)
     existing_lead = result_email.scalar_one_or_none()
-    
+
     if existing_lead:
         return {
-            "is_duplicate": True, 
-            "existing_id": existing_lead.id, 
-            "match_type": "email"
+            "is_duplicate": True,
+            "existing_id": existing_lead.id,
+            "match_type": "email",
         }
-    
+
     # 2. Fuzzy match on company name
     if company_name:
         # Use pg_trgm similarity
-        query_company = select(Lead).where(
-            func.similarity(Lead.company_name, company_name) > settings.DEDUP_SIMILARITY_THRESHOLD
-        ).order_by(func.similarity(Lead.company_name, company_name).desc()).limit(1)
-        
+        query_company = (
+            select(Lead)
+            .where(
+                func.similarity(Lead.company_name, company_name)
+                > settings.DEDUP_SIMILARITY_THRESHOLD
+            )
+            .order_by(func.similarity(Lead.company_name, company_name).desc())
+            .limit(1)
+        )
+
         result_company = await db.execute(query_company)
         match_company = result_company.scalar_one_or_none()
-        
+
         if match_company:
             return {
                 "is_duplicate": True,
                 "existing_id": match_company.id,
-                "match_type": "company_name"
+                "match_type": "company_name",
             }
 
     # 3. Fuzzy match on domain
     if domain:
-        query_domain = select(Lead).where(
-            func.similarity(Lead.company_domain, domain) > settings.DEDUP_SIMILARITY_THRESHOLD
-        ).order_by(func.similarity(Lead.company_domain, domain).desc()).limit(1)
-        
+        query_domain = (
+            select(Lead)
+            .where(
+                func.similarity(Lead.company_domain, domain)
+                > settings.DEDUP_SIMILARITY_THRESHOLD
+            )
+            .order_by(func.similarity(Lead.company_domain, domain).desc())
+            .limit(1)
+        )
+
         result_domain = await db.execute(query_domain)
         match_domain = result_domain.scalar_one_or_none()
-        
+
         if match_domain:
             return {
                 "is_duplicate": True,
                 "existing_id": match_domain.id,
-                "match_type": "domain"
+                "match_type": "domain",
             }
 
     return {"is_duplicate": False}

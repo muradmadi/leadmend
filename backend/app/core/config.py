@@ -12,6 +12,7 @@ Example:
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+
 class Settings(BaseSettings):
     """Container for application-wide environment configuration.
 
@@ -31,16 +32,17 @@ class Settings(BaseSettings):
     DATABASE_URL: str = "postgresql+asyncpg://leadmend:leadmend@db:5432/leadmend"
     ENRICH_API_URL: str = "http://mock-enrich:8080/enrich"
     ENRICHMENT_MAX_RETRIES: int = 3
-    
+
     DEDUP_SIMILARITY_THRESHOLD: float = 0.8
-    
+
     SLACK_HIGH_VALUE_WEBHOOK: str = ""
     SLACK_MID_VALUE_WEBHOOK: str = ""
     SLACK_LOW_VALUE_WEBHOOK: str = ""
     DUPLICATE_SLACK_WEBHOOK: str = ""
     SLACK_INVALID_WEBHOOK: str = ""
     CRM_WEBHOOK_URL: str = "http://n8n:5678/webhook/lead"
-    
+
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
+
 
 settings = Settings()

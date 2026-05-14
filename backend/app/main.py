@@ -6,17 +6,17 @@ connection pool lifecycle. The lifespan context manager ensures that the
 database schema is initialized before serving requests and torn down gracefully.
 """
 
-from fastapi.middleware.cors import CORSMiddleware
-import structlog
 from contextlib import asynccontextmanager
-from fastapi import FastAPI
-from app.core.config import settings
 
-from app.core.db import engine, init_db
-from app.schemas.lead import Lead  # Ensure Lead is registered
+import structlog
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+
 from app.api.v1.webhook import router as webhook_router
+from app.core.db import engine, init_db
 
 logger = structlog.get_logger()
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -32,10 +32,10 @@ async def lifespan(app: FastAPI):
 
     Yields:
         None: Control is passed back to the ASGI server.
-        
+
     Example:
         This is not called directly, but used by FastAPI:
-        
+
         >>> app = FastAPI(lifespan=lifespan)
 
     """
@@ -45,16 +45,19 @@ async def lifespan(app: FastAPI):
         logger.info("Database initialized (tables created)")
     except Exception as e:
         logger.error("Database initialization failed", error=str(e))
-    
+
     yield
     await engine.dispose()
+
 
 app = FastAPI(title="LeadMend API", lifespan=lifespan)
 
 # CORS Configuration
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # For demo purposes, allowing all. In production, restrict this.
+    allow_origins=[
+        "*"
+    ],  # For demo purposes, allowing all. In production, restrict this.
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -62,6 +65,7 @@ app.add_middleware(
 
 # Register Routers
 app.include_router(webhook_router, prefix="/api/v1", tags=["webhook"])
+
 
 @app.get("/health")
 async def health_check():
@@ -72,7 +76,7 @@ async def health_check():
 
     Returns:
         dict: A simple {"status": "ok"} dictionary.
-        
+
     Example:
         >>> from app.main import health_check
         >>> # await health_check()

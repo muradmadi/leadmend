@@ -1,9 +1,11 @@
 """Unit tests for the exact and fuzzy duplicate detection service."""
 
-import pytest
 from unittest.mock import MagicMock
+
+import pytest
+
 from app.services.deduplicator import check_duplicate
-from app.schemas.lead import Lead
+
 
 @pytest.mark.asyncio
 async def test_exact_email_match(db_session, sample_leads):
@@ -17,15 +19,16 @@ async def test_exact_email_match(db_session, sample_leads):
     mock_result = MagicMock()
     mock_result.scalar_one_or_none.return_value = sample_leads[0]
     db_session.execute.return_value = mock_result
-    
+
     result = await check_duplicate(
-        db_session, 
-        email="existing@example.com", 
-        company_name="Totally Different", 
-        domain="diff.com"
+        db_session,
+        email="existing@example.com",
+        company_name="Totally Different",
+        domain="diff.com",
     )
     assert result["is_duplicate"] is True
     assert result["match_type"] == "email"
+
 
 @pytest.mark.asyncio
 async def test_fuzzy_company_match(db_session, sample_leads):
@@ -39,20 +42,21 @@ async def test_fuzzy_company_match(db_session, sample_leads):
     # 2. Second call for company (Success)
     mock_email_result = MagicMock()
     mock_email_result.scalar_one_or_none.return_value = None
-    
+
     mock_company_result = MagicMock()
     mock_company_result.scalar_one_or_none.return_value = sample_leads[1]
-    
+
     db_session.execute.side_effect = [mock_email_result, mock_company_result]
-    
+
     result = await check_duplicate(
-        db_session, 
-        email="new-person@acme.com", 
-        company_name="Acme Corporation", 
-        domain="acme.com"
+        db_session,
+        email="new-person@acme.com",
+        company_name="Acme Corporation",
+        domain="acme.com",
     )
     assert result["is_duplicate"] is True
     assert result["match_type"] == "company_name"
+
 
 @pytest.mark.asyncio
 async def test_no_match(db_session):
@@ -65,11 +69,11 @@ async def test_no_match(db_session):
     mock_result = MagicMock()
     mock_result.scalar_one_or_none.return_value = None
     db_session.execute.return_value = mock_result
-    
+
     result = await check_duplicate(
-        db_session, 
-        email="fresh@startup.io", 
-        company_name="Fresh Startup", 
-        domain="fresh-startup.io"
+        db_session,
+        email="fresh@startup.io",
+        company_name="Fresh Startup",
+        domain="fresh-startup.io",
     )
     assert result["is_duplicate"] is False

@@ -9,20 +9,25 @@ Exports:
     send_to_crm: Syncs the lead data to the configured CRM endpoint.
 """
 
-import logging
-import httpx
 import json
+import logging
+
+import httpx
 from tenacity import retry, stop_after_attempt, wait_exponential
+
 from app.core.config import settings
 
 logger = logging.getLogger(__name__)
 
+
 @retry(
     stop=stop_after_attempt(3),
     wait=wait_exponential(multiplier=1, min=2, max=10),
-    reraise=True
+    reraise=True,
 )
-async def send_slack_notification(webhook_url: str, blocks: list, fallback_text: str = "New Lead Notification") -> None:
+async def send_slack_notification(
+    webhook_url: str, blocks: list, fallback_text: str = "New Lead Notification"
+) -> None:
     """Send a Slack notification using Block Kit.
 
     Retries up to 3 times on failure. If no webhook URL is configured, it
@@ -35,29 +40,33 @@ async def send_slack_notification(webhook_url: str, blocks: list, fallback_text:
 
     Raises:
         httpx.HTTPError: If the request fails after all retries.
-        
+
     Example:
         >>> await send_slack_notification("http://hooks.slack.com/...", [{"type": "section", "text": {"type": "mrkdwn", "text": "Hello"}}])
 
     """
     if not webhook_url:
-        logger.warning(f"Slack webhook not configured, logging message: {fallback_text}")
-        print(f"--- SLACK NOTIFICATION (SIMULATED) ---\n{json.dumps(blocks, indent=2)}\n--- END ---")
+        logger.warning(
+            f"Slack webhook not configured, logging message: {fallback_text}"
+        )
+        print(
+            f"--- SLACK NOTIFICATION (SIMULATED) ---\n{json.dumps(blocks, indent=2)}\n--- END ---"
+        )
         return
 
-    payload = {
-        "text": fallback_text,
-        "blocks": blocks
-    }
+    payload = {"text": fallback_text, "blocks": blocks}
 
     async with httpx.AsyncClient(timeout=10.0) as client:
         try:
             response = await client.post(webhook_url, json=payload)
             response.raise_for_status()
-            logger.info(f"Slack notification sent successfully to {webhook_url[:20]}...")
+            logger.info(
+                f"Slack notification sent successfully to {webhook_url[:20]}..."
+            )
         except httpx.HTTPError as e:
             logger.error(f"Failed to send Slack notification: {e}")
             raise
+
 
 async def send_to_crm(lead_data: dict) -> None:
     """Send lead data to a CRM endpoint.
@@ -68,7 +77,7 @@ async def send_to_crm(lead_data: dict) -> None:
 
     Args:
         lead_data (dict): The complete lead data dictionary.
-        
+
     Example:
         >>> await send_to_crm({"email": "test@test.com", "score": 50})
 

@@ -1,10 +1,13 @@
 """Integration tests for the main lead webhook endpoint."""
 
-import pytest
 import re
 from unittest.mock import MagicMock
-from app.schemas.lead import Lead
+
+import pytest
+
 from app.core.config import settings
+from app.schemas.lead import Lead
+
 
 @pytest.fixture(autouse=True)
 def mock_settings():
@@ -16,11 +19,13 @@ def mock_settings():
     settings.SLACK_INVALID_WEBHOOK = "http://slack.com/invalid"
     settings.CRM_WEBHOOK_URL = "http://crm.com/webhook"
 
+
 def mock_routing_calls(httpx_mock):
     """Mock Slack and CRM calls which are common in most tests."""
     # We use regex to cover any slack webhook and is_reusable to handle multiple calls if needed
     httpx_mock.add_response(url=re.compile(r"http://slack\.com/.*"), status_code=200)
     httpx_mock.add_response(url=settings.CRM_WEBHOOK_URL, status_code=200)
+
 
 @pytest.mark.asyncio
 async def test_webhook_valid_complete_data(client, httpx_mock, db_session):
@@ -39,28 +44,29 @@ async def test_webhook_valid_complete_data(client, httpx_mock, db_session):
             "company_name": "Apple",
             "industry": "Tech",
             "company_size": "201-1000",
-            "domain": "apple.com"
-        }
+            "domain": "apple.com",
+        },
     )
     mock_routing_calls(httpx_mock)
-    
+
     payload = {
         "email": "tim@apple.com",
         "company": "Apple",
-        "website": "https://apple.com"
+        "website": "https://apple.com",
     }
-    
+
     response = await client.post("/api/v1/lead", json=payload)
-    
+
     assert response.status_code == 200
     data = response.json()
     assert data["status"] == "processed"
     # Base 10 + Business 10 + Company 5 + Size 30 + Industry 15 = 70
     assert data["score"] == 70
     assert data["routing"]["slack_channel"] == "#sales-hot"
-    
+
     assert db_session.add.called
     assert db_session.commit.called
+
 
 @pytest.mark.asyncio
 async def test_webhook_missing_fields(client, httpx_mock, db_session):
@@ -74,17 +80,23 @@ async def test_webhook_missing_fields(client, httpx_mock, db_session):
     httpx_mock.add_response(
         method="POST",
         url=settings.ENRICH_API_URL,
-        json={"company_name": "Unknown", "industry": "Unknown", "company_size": "Unknown", "domain": "unknown.com"}
+        json={
+            "company_name": "Unknown",
+            "industry": "Unknown",
+            "company_size": "Unknown",
+            "domain": "unknown.com",
+        },
     )
     mock_routing_calls(httpx_mock)
 
     # Missing email/company
     payload = {"message": "Hello", "website": "https://none.com"}
-    
+
     response = await client.post("/api/v1/lead", json=payload)
-    
+
     assert response.status_code == 200
     assert response.json()["status"] == "processed"
+
 
 @pytest.mark.asyncio
 async def test_webhook_duplicate_email(client, httpx_mock, db_session):
@@ -105,18 +117,21 @@ async def test_webhook_duplicate_email(client, httpx_mock, db_session):
     db_session.execute.return_value = mock_result
 
     # Mock Enrichment
-    httpx_mock.add_response(method="POST", url=settings.ENRICH_API_URL, json={"company_name": "New Corp"})
+    httpx_mock.add_response(
+        method="POST", url=settings.ENRICH_API_URL, json={"company_name": "New Corp"}
+    )
     mock_routing_calls(httpx_mock)
 
     payload = {"email": "dup@example.com", "company": "New Corp"}
-    
+
     response = await client.post("/api/v1/lead", json=payload)
-    
+
     assert response.status_code == 200
     data = response.json()
     assert data["is_duplicate"] is True
     assert data["score"] == 0
     assert data["routing"]["slack_channel"] == "#ops-duplicates"
+
 
 @pytest.mark.asyncio
 async def test_webhook_enrichment_failure(client, httpx_mock, db_session):
@@ -128,17 +143,20 @@ async def test_webhook_enrichment_failure(client, httpx_mock, db_session):
     """
     # Mock Enrichment Failure
     for _ in range(settings.ENRICHMENT_MAX_RETRIES):
-        httpx_mock.add_response(method="POST", url=settings.ENRICH_API_URL, status_code=503)
-    
+        httpx_mock.add_response(
+            method="POST", url=settings.ENRICH_API_URL, status_code=503
+        )
+
     mock_routing_calls(httpx_mock)
-    
+
     # Gmail + Unknown company = score 10
     payload = {"email": "fail@gmail.com", "company": "Unknown"}
-    
+
     response = await client.post("/api/v1/lead", json=payload)
-    
+
     assert response.status_code == 200
     assert response.json()["score"] == 10
+
 
 @pytest.mark.asyncio
 async def test_webhook_routing_logic(client, httpx_mock, db_session):
@@ -152,14 +170,14 @@ async def test_webhook_routing_logic(client, httpx_mock, db_session):
     httpx_mock.add_response(
         method="POST",
         url=settings.ENRICH_API_URL,
-        json={"company_name": "Giant", "company_size": "201-1000", "industry": "Tech"}
+        json={"company_name": "Giant", "company_size": "201-1000", "industry": "Tech"},
     )
     mock_routing_calls(httpx_mock)
-    
+
     payload = {"email": "ceo@giant.com", "company": "Giant"}
-    
+
     await client.post("/api/v1/lead", json=payload)
-    
+
     # Verify high value slack called
     requests = httpx_mock.get_requests()
     slack_urls = [str(r.url) for r in requests]
@@ -174,27 +192,27 @@ async def test_webhook_garbage_payload(client, httpx_mock, db_session):
     not be saved to the database, and route to the invalid lead channel.
     """
     mock_routing_calls(httpx_mock)
-    
+
     payload = {
         "name": "???",
         "email": "asdf@jkl",
         "company": "",
         "website": "",
-        "message": "1234"
+        "message": "1234",
     }
-    
+
     response = await client.post("/api/v1/lead", json=payload)
-    
+
     assert response.status_code == 200
     data = response.json()
     assert data["score"] == 0
     assert data["routing_channel"] == "#ops-invalid"
     assert data["enriched_data"]["industry"] == "Unknown"
-    
+
     # Verify enrichment was NEVER called
     requests = httpx_mock.get_requests()
     enrich_calls = [r for r in requests if str(r.url) == settings.ENRICH_API_URL]
     assert len(enrich_calls) == 0
-    
+
     # Verify DB add was NEVER called for this lead
     assert not db_session.add.called
