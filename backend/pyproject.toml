@@ -3,7 +3,6 @@ name = "leadmend-backend"
 version = "0.1.0"
 description = "LeadMend backend service"
 authors = ["LeadMend Team"]
-authors = ["LeadMend Team"]
 packages = [{include = "app"}]
 
 [tool.poetry.dependencies]
